@@ -11,6 +11,7 @@ import (
 
 	"github.com/goreleaser/goreleaser/internal/artifact"
 	"github.com/goreleaser/goreleaser/internal/testctx"
+	"github.com/goreleaser/goreleaser/internal/testlib"
 	"github.com/goreleaser/goreleaser/pkg/config"
 	"github.com/stretchr/testify/require"
 )
@@ -184,7 +185,7 @@ func TestGitHubReleaseURLTemplate(t *testing.T) {
 func TestGitHubCreateReleaseWrongNameTemplate(t *testing.T) {
 	ctx := testctx.NewWithCfg(config.Project{
 		Release: config.Release{
-			NameTemplate: "{{.dddddddddd",
+			NameTemplate: "{{.NOPE}}",
 		},
 	})
 	client, err := newGitHub(ctx, ctx.Token)
@@ -192,7 +193,21 @@ func TestGitHubCreateReleaseWrongNameTemplate(t *testing.T) {
 
 	str, err := client.CreateRelease(ctx, "")
 	require.Empty(t, str)
-	require.EqualError(t, err, `template: tmpl:1: unclosed action`)
+	testlib.RequireTemplateError(t, err)
+}
+
+func TestGitHubCreateReleaseWrongTagTemplate(t *testing.T) {
+	ctx := testctx.NewWithCfg(config.Project{
+		Release: config.Release{
+			Tag: "{{.NOPE}}",
+		},
+	})
+	client, err := newGitHub(ctx, ctx.Token)
+	require.NoError(t, err)
+
+	str, err := client.CreateRelease(ctx, "")
+	require.Empty(t, str)
+	testlib.RequireTemplateError(t, err)
 }
 
 func TestGithubGetDefaultBranch(t *testing.T) {

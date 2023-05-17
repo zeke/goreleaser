@@ -48,6 +48,10 @@ func (Pipe) Default(ctx *context.Context) error {
 		return ErrMultipleReleases
 	}
 
+	if ctx.Config.Release.Tag == "" {
+		ctx.Config.Release.Tag = "{{.Tag}}"
+	}
+
 	if ctx.Config.Release.NameTemplate == "" {
 		ctx.Config.Release.NameTemplate = "{{.Tag}}"
 	}

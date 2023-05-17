@@ -256,6 +256,11 @@ func (c *githubClient) CreateRelease(ctx *context.Context, body string) (string,
 		return "", err
 	}
 
+	tag, err := tmpl.New(ctx).Apply(ctx.Config.Release.Tag)
+	if err != nil {
+		return "", err
+	}
+
 	if ctx.Config.Release.Draft && ctx.Config.Release.ReplaceExistingDraft {
 		if err := c.deleteExistingDraftRelease(ctx, title); err != nil {
 			return "", err
@@ -267,7 +272,7 @@ func (c *githubClient) CreateRelease(ctx *context.Context, body string) (string,
 
 	data := &github.RepositoryRelease{
 		Name:       github.String(title),
-		TagName:    github.String(ctx.Git.CurrentTag),
+		TagName:    github.String(tag),
 		Body:       github.String(body),
 		Draft:      github.Bool(ctx.Config.Release.Draft),
 		Prerelease: github.Bool(ctx.PreRelease),

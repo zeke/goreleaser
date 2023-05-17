@@ -48,7 +48,16 @@ release:
   #
   # Default: ''
   # Since: v1.11
+  # Templates: allowed
   target_commitish: '{{ .Commit }}'
+
+  # This allows to change which tag GitHub will create.
+  # Usually you'll use this together with `target_commitish`.
+  #
+  # Default: '{{ .CurrentTag }}'
+  # Since: v1.19
+  # Templates: allowed
+  tag: '{{ .Now.Format "2006.01.02" }}'
 
   # If set, will create a release discussion in the category specified.
   #

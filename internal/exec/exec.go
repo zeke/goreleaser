@@ -14,7 +14,6 @@ import (
 	"github.com/goreleaser/goreleaser/internal/extrafiles"
 	"github.com/goreleaser/goreleaser/internal/gio"
 	"github.com/goreleaser/goreleaser/internal/logext"
-	"github.com/goreleaser/goreleaser/internal/pipe"
 	"github.com/goreleaser/goreleaser/internal/semerrgroup"
 	"github.com/goreleaser/goreleaser/internal/tmpl"
 	"github.com/goreleaser/goreleaser/pkg/config"
@@ -26,10 +25,6 @@ var passthroughEnvVars = []string{"HOME", "USER", "USERPROFILE", "TMPDIR", "TMP"
 
 // Execute the given publisher
 func Execute(ctx *context.Context, publishers []config.Publisher) error {
-	if ctx.SkipPublish {
-		return pipe.ErrSkipPublishEnabled
-	}
-
 	for _, p := range publishers {
 		log.WithField("name", p.Name).Debug("executing custom publisher")
 		err := executePublisher(ctx, p)
@@ -96,25 +91,24 @@ func executeCommand(c *command, artifact *artifact.Artifact) error {
 		cmd.Dir = c.Dir
 	}
 
-	fields := log.Fields{
-		"cmd":      c.Args[0],
-		"artifact": artifact.Name,
-	}
 	var b bytes.Buffer
 	w := gio.Safe(&b)
 	cmd.Stderr = io.MultiWriter(logext.NewWriter(), w)
 	cmd.Stdout = io.MultiWriter(logext.NewWriter(), w)
 
-	log.WithFields(fields).Info("publishing")
+	log := log.WithField("cmd", c.Args[0]).
+		WithField("artifact", artifact.Name)
+
+	log.Info("publishing")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("publishing: %s failed: %w: %s", c.Args[0], err, b.String())
 	}
 
-	log.WithFields(fields).Debugf("command %s finished successfully", c.Args[0])
+	log.Debug("command finished successfully")
 	return nil
 }
 
-func filterArtifacts(artifacts artifact.Artifacts, publisher config.Publisher) []*artifact.Artifact {
+func filterArtifacts(artifacts *artifact.Artifacts, publisher config.Publisher) []*artifact.Artifact {
 	filters := []artifact.Filter{
 		artifact.ByType(artifact.UploadableArchive),
 		artifact.ByType(artifact.UploadableFile),
@@ -152,20 +146,10 @@ type command struct {
 // Those variables can be replaced by the given context, goos, goarch, goarm and more.
 func resolveCommand(ctx *context.Context, publisher config.Publisher, artifact *artifact.Artifact) (*command, error) {
 	var err error
-
-	replacements := make(map[string]string)
-	// TODO: Replacements should be associated only with relevant artifacts/archives
-	// this is pretty much all wrong and will be removed soon.
-	archives := ctx.Config.Archives
-	if len(archives) > 0 {
-		replacements = archives[0].Replacements
-	}
-
 	dir := publisher.Dir
 
 	// nolint:staticcheck
-	tpl := tmpl.New(ctx).
-		WithArtifactReplacements(artifact, replacements)
+	tpl := tmpl.New(ctx).WithArtifact(artifact)
 	if dir != "" {
 		dir, err = tpl.Apply(dir)
 		if err != nil {

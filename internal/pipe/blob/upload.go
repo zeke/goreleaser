@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,6 +34,8 @@ import (
 	_ "gocloud.dev/secrets/gcpkms"
 )
 
+const s3ForcePathStyle = "s3ForcePathStyle"
+
 func urlFor(ctx *context.Context, conf config.Blob) (string, error) {
 	bucket, err := tmpl.New(ctx).Apply(conf.Bucket)
 	if err != nil {
@@ -58,9 +61,9 @@ func urlFor(ctx *context.Context, conf config.Blob) (string, error) {
 	if endpoint != "" {
 		query.Add("endpoint", endpoint)
 		if conf.S3ForcePathStyle == nil {
-			query.Add("s3ForcePathStyle", "true")
+			query.Add(s3ForcePathStyle, "true")
 		} else {
-			query.Add("s3ForcePathStyle", fmt.Sprintf("%t", *conf.S3ForcePathStyle))
+			query.Add(s3ForcePathStyle, strconv.FormatBool(*conf.S3ForcePathStyle))
 		}
 	}
 
@@ -230,9 +233,7 @@ func (u *productionUploader) Close() error {
 }
 
 func (u *productionUploader) Open(ctx *context.Context, bucket string, conf *config.Blob) error {
-	log.WithFields(log.Fields{
-		"bucket": bucket,
-	}).Debug("uploading")
+	log.WithField("bucket", bucket).Debug("uploading")
 
 	conn, err := blob.OpenBucket(ctx, bucket)
 	if err != nil {
@@ -248,7 +249,7 @@ func (u *productionUploader) Upload(ctx *context.Context, filepath string, data 
 	opts := &blob.WriterOptions{
 		ContentDisposition: "attachment; filename=" + path.Base(filepath),
 	}
-	if u.conf.ACL != "" {
+	if u.conf.ACL != "" && u.conf.Provider == "s3" {
 		opts.BeforeWrite = func(asFunc func(interface{}) bool) error {
 			req := &s3manager.UploadInput{}
 			ok := asFunc(&req)

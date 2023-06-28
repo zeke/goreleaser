@@ -32,6 +32,7 @@ type GitInfo struct {
 	TagSubject  string
 	TagContents string
 	TagBody     string
+	Dirty       bool
 }
 
 // Env is the environment variables.
@@ -78,7 +79,7 @@ type Context struct {
 	TokenType          TokenType
 	Git                GitInfo
 	Date               time.Time
-	Artifacts          artifact.Artifacts
+	Artifacts          *artifact.Artifacts
 	ReleaseURL         string
 	ReleaseNotes       string
 	ReleaseNotesFile   string
@@ -90,6 +91,7 @@ type Context struct {
 	Version            string
 	ModulePath         string
 	Snapshot           bool
+	FailFast           bool
 	SkipPostBuildHooks bool
 	SkipPublish        bool
 	SkipAnnounce       bool
@@ -117,7 +119,6 @@ type Semver struct {
 	Major      uint64
 	Minor      uint64
 	Patch      uint64
-	RawVersion string
 	Prerelease string
 }
 

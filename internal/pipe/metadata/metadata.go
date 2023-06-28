@@ -1,4 +1,4 @@
-// Package metadata provides the pipe implementation that creates a artifacts.json file in the dist folder.
+// Package metadata provides the pipe implementation that creates an artifacts.json file in the dist folder.
 package metadata
 
 import (
@@ -15,8 +15,8 @@ import (
 // Pipe implementation.
 type Pipe struct{}
 
-func (Pipe) String() string                 { return "storing release metadata" }
-func (Pipe) Skip(ctx *context.Context) bool { return false }
+func (Pipe) String() string               { return "storing release metadata" }
+func (Pipe) Skip(_ *context.Context) bool { return false }
 
 // Run the pipe.
 func (Pipe) Run(ctx *context.Context) error {

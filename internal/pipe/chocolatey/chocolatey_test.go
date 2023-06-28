@@ -9,33 +9,35 @@ import (
 	"github.com/goreleaser/goreleaser/internal/artifact"
 	"github.com/goreleaser/goreleaser/internal/client"
 	"github.com/goreleaser/goreleaser/internal/golden"
+	"github.com/goreleaser/goreleaser/internal/testctx"
 	"github.com/goreleaser/goreleaser/internal/testlib"
 	"github.com/goreleaser/goreleaser/pkg/config"
 	"github.com/goreleaser/goreleaser/pkg/context"
 	"github.com/stretchr/testify/require"
 )
 
+func TestContinueOnError(t *testing.T) {
+	require.True(t, Pipe{}.ContinueOnError())
+}
+
 func TestDescription(t *testing.T) {
 	require.NotEmpty(t, Pipe{}.String())
 }
 
 func TestSkip(t *testing.T) {
-	ctx := context.New(config.Project{})
+	ctx := testctx.New()
 	require.True(t, Pipe{}.Skip(ctx))
 }
 
 func TestDefault(t *testing.T) {
 	testlib.Mktmp(t)
 
-	ctx := &context.Context{
-		TokenType: context.TokenTypeGitHub,
-		Config: config.Project{
-			ProjectName: "myproject",
-			Chocolateys: []config.Chocolatey{
-				{},
-			},
+	ctx := testctx.NewWithCfg(config.Project{
+		ProjectName: "myproject",
+		Chocolateys: []config.Chocolatey{
+			{},
 		},
-	}
+	}, testctx.GitHubTokenType)
 
 	require.NoError(t, Pipe{}.Default(ctx))
 	require.Equal(t, ctx.Config.ProjectName, ctx.Config.Chocolateys[0].Name)
@@ -106,17 +108,14 @@ func Test_doRun(t *testing.T) {
 				cmd = stdCmd{}
 			})
 
-			ctx := &context.Context{
-				Git: context.GitInfo{
-					CurrentTag: "v1.0.1",
-				},
-				Version:   "1.0.1",
-				Artifacts: artifact.New(),
-				Config: config.Project{
+			ctx := testctx.NewWithCfg(
+				config.Project{
 					Dist:        folder,
 					ProjectName: "run-all",
 				},
-			}
+				testctx.WithCurrentTag("v1.0.1"),
+				testctx.WithVersion("1.0.1"),
+			)
 
 			ctx.Artifacts.Add(&artifact.Artifact{
 				Name:    "app_1.0.1_windows_amd64.zip",
@@ -149,9 +148,7 @@ func Test_doRun(t *testing.T) {
 }
 
 func Test_buildNuspec(t *testing.T) {
-	ctx := &context.Context{
-		Version: "1.12.3",
-	}
+	ctx := testctx.New(testctx.WithVersion("1.12.3"))
 	choco := config.Chocolatey{
 		Name:        "goreleaser",
 		IDs:         []string{},
@@ -176,14 +173,7 @@ func Test_buildTemplate(t *testing.T) {
 	folder := t.TempDir()
 	file := filepath.Join(folder, "archive")
 	require.NoError(t, os.WriteFile(file, []byte("lorem ipsum"), 0o644))
-
-	ctx := &context.Context{
-		Version: "1.0.0",
-		Git: context.GitInfo{
-			CurrentTag: "v1.0.0",
-		},
-	}
-
+	ctx := testctx.New(testctx.WithVersion("1.0.0"), testctx.WithCurrentTag("v1.0.0"))
 	artifacts := []*artifact.Artifact{
 		{
 			Name:    "app_1.0.0_windows_386.zip",
@@ -297,11 +287,7 @@ func TestPublish(t *testing.T) {
 				cmd = stdCmd{}
 			})
 
-			ctx := &context.Context{
-				SkipPublish: tt.skip,
-				Artifacts:   artifact.New(),
-			}
-
+			ctx := testctx.New(func(ctx *context.Context) { ctx.SkipPublish = tt.skip })
 			for _, artifact := range tt.artifacts {
 				ctx.Artifacts.Add(&artifact)
 			}
@@ -319,12 +305,16 @@ func TestPublish(t *testing.T) {
 	}
 }
 
+func TestDependencies(t *testing.T) {
+	require.Equal(t, []string{"choco"}, Pipe{}.Dependencies(nil))
+}
+
 type fakeCmd struct {
 	execFn func() ([]byte, error)
 }
 
 var _ cmder = fakeCmd{}
 
-func (f fakeCmd) Exec(ctx *context.Context, name string, args ...string) ([]byte, error) {
+func (f fakeCmd) Exec(_ *context.Context, _ string, _ ...string) ([]byte, error) {
 	return f.execFn()
 }

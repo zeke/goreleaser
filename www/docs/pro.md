@@ -3,10 +3,16 @@
 GoReleaser Pro is a paid, closed-source GoReleaser distribution with some
 additional features:
 
+
+- [x] [Template entire files](/customization/templatefiles) and add them to the
+  release. You can also template files that will be included in archives,
+  packages, Docker images, etc...;
+- [x] Use the [`.Artifacts`](/customization/templates/#artifacts) template
+  variable to build more powerful customizations;
 - [x] [Split and merge builds](/customization/partial) to speed up your release
   by splitting work, use CGO, or run platform-specific code;
 - [x] More [changelog options](/customization/changelog): Filter commits by path
-  & sub-groups;
+  & subgroups, group dividers;
 - [x] Have custom [before and after hooks for archives](/customization/archive/);
 - [x] Prepare a release with
   [`goreleaser release --prepare`](/cmd/goreleaser_release/), publish and

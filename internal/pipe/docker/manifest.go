@@ -24,6 +24,18 @@ func (ManifestPipe) Skip(ctx *context.Context) bool {
 	return len(ctx.Config.DockerManifests) == 0 || ctx.SkipDocker
 }
 
+func (ManifestPipe) Dependencies(ctx *context.Context) []string {
+	var cmds []string
+	for _, s := range ctx.Config.DockerManifests {
+		switch s.Use {
+		case useDocker, useBuildx:
+			cmds = append(cmds, "docker")
+			// TODO: check buildx
+		}
+	}
+	return cmds
+}
+
 // Default sets the pipe defaults.
 func (ManifestPipe) Default(ctx *context.Context) error {
 	ids := ids.New("docker_manifests")
@@ -48,11 +60,15 @@ func (ManifestPipe) Publish(ctx *context.Context) error {
 	for _, manifest := range ctx.Config.DockerManifests {
 		manifest := manifest
 		g.Go(func() error {
-			if strings.TrimSpace(manifest.SkipPush) == "true" {
+			skip, err := tmpl.New(ctx).Apply(manifest.SkipPush)
+			if err != nil {
+				return err
+			}
+			if strings.TrimSpace(skip) == "true" {
 				return pipe.Skip("docker_manifest.skip_push is set")
 			}
 
-			if strings.TrimSpace(manifest.SkipPush) == "auto" && ctx.Semver.Prerelease != "" {
+			if strings.TrimSpace(skip) == "auto" && ctx.Semver.Prerelease != "" {
 				return pipe.Skip("prerelease detected with 'auto' push, skipping docker manifest")
 			}
 

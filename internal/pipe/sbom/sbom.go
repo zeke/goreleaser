@@ -31,6 +31,14 @@ func (Pipe) Skip(ctx *context.Context) bool {
 	return ctx.SkipSBOMCataloging || len(ctx.Config.SBOMs) == 0
 }
 
+func (Pipe) Dependencies(ctx *context.Context) []string {
+	var cmds []string
+	for _, s := range ctx.Config.SBOMs {
+		cmds = append(cmds, s.Cmd)
+	}
+	return cmds
+}
+
 // Default sets the Pipes defaults.
 func (Pipe) Default(ctx *context.Context) error {
 	ids := ids.New("sboms")
@@ -173,8 +181,6 @@ func catalogArtifact(ctx *context.Context, cfg config.SBOM, a *artifact.Artifact
 		names = append(names, filepath.Base(p))
 	}
 
-	fields := log.Fields{"cmd": cfg.Cmd, "artifact": artifactDisplayName, "sboms": strings.Join(names, ", ")}
-
 	// The GoASTScanner flags this as a security risk.
 	// However, this works as intended. The nosec annotation
 	// tells the scanner to ignore this.
@@ -194,7 +200,10 @@ func catalogArtifact(ctx *context.Context, cfg config.SBOM, a *artifact.Artifact
 	cmd.Stderr = io.MultiWriter(logext.NewWriter(), w)
 	cmd.Stdout = io.MultiWriter(logext.NewWriter(), w)
 
-	log.WithFields(fields).Info("cataloging")
+	log.WithField("cmd", cfg.Cmd).
+		WithField("artifact", artifactDisplayName).
+		WithField("sbom", names).
+		Info("cataloging")
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("cataloging artifacts: %s failed: %w: %s", cfg.Cmd, err, b.String())
 	}

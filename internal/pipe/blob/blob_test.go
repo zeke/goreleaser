@@ -129,6 +129,21 @@ func TestURL(t *testing.T) {
 		require.Equal(t, "s3://foo?disableSSL=true&endpoint=s3.foobar.com&region=us-west-1&s3ForcePathStyle=true", url)
 	})
 
+	t.Run("s3 path", func(t *testing.T) {
+		enable := false
+		url, err := urlFor(testctx.New(), config.Blob{
+			Bucket:           "foo",
+			Provider:         "s3",
+			Region:           "us-west-1",
+			Folder:           "foo",
+			Endpoint:         "s3.foobar.com",
+			DisableSSL:       true,
+			S3ForcePathStyle: &enable,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "s3://foo?disableSSL=true&endpoint=s3.foobar.com&region=us-west-1&s3ForcePathStyle=false", url)
+	})
+
 	t.Run("s3 with some opts", func(t *testing.T) {
 		url, err := urlFor(testctx.New(), config.Blob{
 			Bucket:     "foo",

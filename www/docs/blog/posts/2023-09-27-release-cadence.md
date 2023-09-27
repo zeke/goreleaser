@@ -30,20 +30,21 @@ Let me repeat: **four hundred and sixty eight v zeroes**.
 
 In fact, `v1` was launched less than 2 years ago, in [November, 2021][v1].
 
-Like many other things, the way we handle deprecations was from that time.
-A time in which GoReleaser never had major releases, because there wasn't
-one: we would add the deprecation notice to the
+Like many other things, the way we handle deprecations is from that time.
+A time in which GoReleaser didn't had any major releases.
+In that time, we would add the deprecation notice to the
 [deprecations page][deprecations] and warn about it in the release's output
-if you use any of them, and, after roughly 6 months, remove the deprecated
-option and move on with life.
+if you use any of them, and then, after roughly 6 months,
+remove the deprecated option for good.
 
 [Breaking changes are allowed in v0][semver-si4], so, there were no broken
-promises.
+promises (although not ideal).
 
 On the other hand, `v1` is a _major_ version, so it should not introduce
 breaking changes.
 
-In retrospect, my mistake was never stopping to think about it again after `v1`.
+In retrospect, my mistake was never stopping to think about this again after
+`v1` was released.
 
 [semver-si4]: https://semver.org/#spec-item-4
 

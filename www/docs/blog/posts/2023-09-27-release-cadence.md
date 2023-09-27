@@ -28,7 +28,7 @@ Let me repeat: **four hundred and sixty eight v zeroes**.
 
 [^joke]: yes, I know this is kind of a joke.
 
-In fact, `v1` was launched less than 2 years ago, in [November, 2022][v1].
+In fact, `v1` was launched less than 2 years ago, in [November, 2021][v1].
 
 Like many other things, the way we handle deprecations was from that time.
 A time in which GoReleaser never had major releases, because there wasn't

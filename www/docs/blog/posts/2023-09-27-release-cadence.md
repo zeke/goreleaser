@@ -13,7 +13,9 @@ A couple of weeks ago, I got a couple of complaints about the way GoReleaser
 is being versioned - more precisely, the fact that deprecated options are
 removed in **minor** instead of **major** versions.
 
-Those complaints are valid, and today I'm announcing how I plan to move forward.
+Those are valid complaints, and today I'm announcing how I plan to move forward.
+
+<!-- more -->
 
 ## History
 
